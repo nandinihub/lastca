@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Chat Box</title>
+    <link href="chatApp.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+    <div class="body">
+        <div class="header">
+            <h1 style="color : white;">CHAT APP</h1>
+
+        </div>
+        <div class="row">
+            <div class="col-4">
+                <h2>Online</h2>
+                <h8 id="onlineUser"></h8>
+            </div>
+            <div class="col-8">
+
+                <div class="displayArea">
+                    <div class="sender" id="senderName">
+                        <!-- <h3>Nandini</h3> -->
+                    </div>
+                    <div class="outgoingMessage" id="senderMessage">
+                        <!-- <p>hiii</p> -->
+                    </div>
+                    <div class="receiver" id="receiverName">
+                        <!-- <h3>Shrutika</h3> -->
+                    </div>
+                    <div class="incomingMessage" id="receiverMessage">
+                        <!-- <p>hello</p> -->
+                    </div>
+                </div>
+                <form id="inputArea" enctype="multipart/form-data">
+                    <input class="input" id="inputMessage" type="text" name="textMessage" placeholder="Write a message...">
+                    <button class="button" id="btn">Send Message</button>
+                    <input type="file" id="uploadFile" class="imagebutton" name="fileName">
+                    <button class="button" id="uploadBtn">Upload File</button>
+                    <label for ="roominput">Talk Privately:</label>
+                    <input class="roominput" id="roomInput" type="text" placeholder="Write user id...">
+                    <!-- <button class="button" id="roomBtn">Talk Privately</button> -->
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        var form = document.getElementById("inputArea");
+        var usersCount = document.getElementById("onlineUser");
+        var senderMsg = document.getElementById("senderMessage");
+        var writeAMessage = document.getElementById("inputMessage");
+        var msgValue = writeAMessage.value;
+        var sendMessage = document.getElementById("btn");
+        var sendFile = document.getElementById("uploadFile");
+        var fileValue = sendFile.value;
+        var uploads = document.getElementById("uploadBtn");
+        var roomMsg = document.getElementById("roomInput");
+        var roomValue = roomMsg.value;
+        var roomButton = document.getElementById("roomBtn");
+
+
+        // socket.on("usersCount", count =>{
+        //     usersCount.innerHTML += count; 
+        // })
+
+        socket.on("name", (name, socketId) => {
+            var item = document.createElement('button');
+            usersCount.innerHTML += name + " : " + (socketId);
+            console.log(socketId);
+            // senderMsg.innerHTML += name + " has joined the chat";
+            // senderMsg.appendChild(item);
+            usersCount.appendChild(item);
+        })
+
+        socket.on("message", message => {
+            var item = document.createElement('div');
+            for (let i = 0; i < message.length; i++) {
+                var oldMsgs = message[i] || message[i];
+                senderMsg.innerHTML += oldMsgs;
+                senderMsg.appendChild(item);
+            }
+
+            console.log(message);
+        })
+
+    
+        form.addEventListener("submit", text => {
+            text.preventDefault();
+            var msgValue = writeAMessage.value;
+            var roomValue = roomMsg.value;
+            if (msgValue === "") return
+            displayMessage(msgValue)
+            socket.emit("sendmessage", msgValue, roomValue)
+            writeAMessage.value = "";
+        })
+
+        function displayMessage(msgValue) {
+            const div = document.createElement("div");
+            div.textContent = msgValue;
+            senderMsg.append(div);
+        }
+
+
+        socket.on("recieveMessage", msgValue => {
+            displayMessage(msgValue);
+        })
+
+
+        form.addEventListener("submit", file => {
+            file.preventDefault();
+            var fileValue = sendFile.files[0].name;
+            var roomValue = roomMsg.value;
+            if (fileValue === "") return
+            displayMessage(fileValue)
+            socket.emit("sendfile", fileValue, roomValue)
+            sendFile.value = "";
+        })
+
+        function displayMessage(fileValue) {
+            const div = document.createElement("div");
+            div.textContent = fileValue;
+            senderMsg.append(div);
+        }
+
+        socket.on("recieveFile", fileValue => {
+            displayMessage(fileValue);
+        })
+    </script>
+
+</body>
+</html>
